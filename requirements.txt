@@ -1,0 +1,6 @@
+ultralytics
+easyocr
+flask
+yolov11n
+opencv-python
+numpy
