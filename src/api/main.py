@@ -1,57 +1,81 @@
 from flask import Flask, request, jsonify
-from detection.yolov11n_detector import YOLOv11nDetector
-from detection.easyocr_detector import EasyOCRDetector
-import os
+from pathlib import Path
+from PIL import Image
+import io
+import sys
 
-# Khởi tạo Flask app
+# Append project directory to sys.path
+sys.path.append('D:/MLOPS_FINAL/Final_MLops')
+
+# Import các hàm xử lý từ detection
+from src.detection.yolov11n_detector import detect_with_yolov11n
+from src.detection.easyocr_detector import detect_text_with_easyocr
+
 app = Flask(__name__)
 
-# Tạo đối tượng YOLO và EasyOCR
-yolo_detector = YOLOv11nDetector()
-ocr_detector = EasyOCRDetector()
+# Đường dẫn lưu trữ tạm thời (nếu cần)
+TEMP_IMAGE_PATH = Path("temp_images")
+TEMP_IMAGE_PATH.mkdir(exist_ok=True)
 
-def save_results(results, filename):
-    """Lưu kết quả vào tệp."""
-    with open(filename, 'w') as f:
-        for result in results:
-            f.write(f"{result}\n")
-
-@app.route('/detect_objects', methods=['POST'])
+@app.route("/detect/objects", methods=["POST"])
 def detect_objects():
-    """API nhận ảnh và trả về kết quả phát hiện đối tượng."""
-    file = request.files.get('image')
-    
-    if file:
-        image_path = os.path.join('uploads', file.filename)
-        file.save(image_path)
-        
-        # Phát hiện đối tượng
-        result = yolo_detector.detect(image_path)
-        
-        # Lưu kết quả vào tệp (nếu cần)
-        save_results(result, 'results.txt')
+    """
+    API endpoint để phát hiện đối tượng trong hình ảnh sử dụng YOLOv11n.
+    """
+    if 'file' not in request.files:
+        return jsonify({"error": "Không tìm thấy file trong request."}), 400
 
-        return jsonify(result.to_dict(orient='records'))
-    else:
-        return jsonify({"error": "No image file provided"}), 400
+    file = request.files['file']
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        return jsonify({"error": "File không phải là định dạng hình ảnh (JPEG/PNG)."}), 400
 
+    try:
+        # Đọc nội dung file và lưu tạm thời
+        temp_file = TEMP_IMAGE_PATH / file.filename
+        file.save(temp_file)
 
-@app.route('/ocr_text', methods=['POST'])
-def ocr_text():
-    """API nhận ảnh và trả về văn bản nhận diện."""
-    file = request.files.get('image')
-    
-    if file:
-        image_path = os.path.join('uploads', file.filename)
-        file.save(image_path)
-        
-        # Phát hiện văn bản
-        texts = ocr_detector.detect_text(image_path)
-        
-        return jsonify({"texts": texts})
-    else:
-        return jsonify({"error": "No image file provided"}), 400
+        # Gọi YOLOv11n để phát hiện đối tượng
+        results = detect_with_yolov11n(temp_file)
 
+        # Xóa file tạm thời sau khi xử lý
+        temp_file.unlink()
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        return jsonify({"status": "success", "results": results})
+
+    except Exception as e:
+        return jsonify({"error": f"Lỗi xử lý: {str(e)}"}), 500
+
+@app.route("/detect/text", methods=["POST"])
+def detect_text():
+    """
+    API endpoint để nhận diện văn bản trong hình ảnh sử dụng EasyOCR.
+    """
+    if 'file' not in request.files:
+        return jsonify({"error": "Không tìm thấy file trong request."}), 400
+
+    file = request.files['file']
+    if file.content_type not in ["image/jpeg", "image/png"]:
+        return jsonify({"error": "File không phải là định dạng hình ảnh (JPEG/PNG)."}), 400
+
+    try:
+        # Đọc nội dung file
+        image_data = file.read()
+        image = Image.open(io.BytesIO(image_data))
+
+        # Gọi EasyOCR để nhận diện văn bản
+        results = detect_text_with_easyocr(image)
+
+        return jsonify({"status": "success", "text": results})
+
+    except Exception as e:
+        return jsonify({"error": f"Lỗi xử lý: {str(e)}"}), 500
+
+@app.route("/", methods=["GET"])
+def root():
+    """
+    Endpoint mặc định.
+    """
+    return jsonify({"message": "Chào mừng đến với Image Detection API. Hãy thử POST lên /detect/objects hoặc /detect/text."})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
