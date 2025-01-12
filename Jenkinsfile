@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'image-detection-app'
+        DOCKER_IMAGE = 'maddox1311/image-detection-app' // Tên đầy đủ trên DockerHub
         DOCKER_TAG = 'latest'
-        REGISTRY_URL = 'maddox1311' // Thay bằng DockerHub của bạn
+        DOCKER_CONTAINER_NAME = 'image-detection-container'
     }
 
     stages {
@@ -26,7 +26,8 @@ pipeline {
             steps {
                 script {
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
-                        sh 'python -m unittest discover tests'
+                        // Chạy unit tests
+                        sh 'python -m unittest discover -s tests -p "*.py"'
                     }
                 }
             }
@@ -45,7 +46,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    docker.run("-d --name image-detection-container -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    // Xóa container cũ nếu có
+                    sh "docker stop ${DOCKER_CONTAINER_NAME} || true"
+                    sh "docker rm ${DOCKER_CONTAINER_NAME} || true"
+
+                    // Chạy container mới
+                    sh "docker run -d --name ${DOCKER_CONTAINER_NAME} -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
@@ -53,8 +59,8 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
-            sh 'docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true'
+            echo 'Cleaning up dangling images...'
+            sh 'docker image prune -f || true'
         }
         success {
             echo 'Deployment Successful!'
