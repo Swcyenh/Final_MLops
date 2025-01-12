@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from detection.yolov11n_detector import YOLOv11nDetector
 from detection.easyocr_detector import EasyOCRDetector
-from .utils import save_results
 import os
 
 # Khởi tạo Flask app
@@ -10,6 +9,12 @@ app = Flask(__name__)
 # Tạo đối tượng YOLO và EasyOCR
 yolo_detector = YOLOv11nDetector()
 ocr_detector = EasyOCRDetector()
+
+def save_results(results, filename):
+    """Lưu kết quả vào tệp."""
+    with open(filename, 'w') as f:
+        for result in results:
+            f.write(f"{result}\n")
 
 @app.route('/detect_objects', methods=['POST'])
 def detect_objects():
