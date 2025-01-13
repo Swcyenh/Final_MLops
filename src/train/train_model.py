@@ -44,12 +44,12 @@ def train_yolov11n(data_config, model_config, epochs=50, batch_size=16, img_size
     metrics = []
 
     # Tải mô hình YOLOv11n
-    model = YOLO('yolov11n.pt')  # Tải mô hình YOLOv11n từ tệp yolov11n.pt
+    model = YOLO('yolo11n.pt')  # Tải mô hình YOLOv11n từ tệp yolov11n.pt
 
     # Huấn luyện mô hình với các tham số
     for epoch in range(epochs):
         # Huấn luyện và lấy kết quả
-        results = model.train(data=data_config, epochs=1, batch_size=batch_size, img_size=img_size)
+        results = model.train(data=data_config, epochs=1, batch=batch_size, imgsz=img_size)
         loss = results.box_loss  # Mất mát (box_loss) từ huấn luyện
         accuracy = results.metrics["mAP_0.5"]  # Đo độ chính xác (mAP) tại IoU=0.5
         
@@ -58,5 +58,5 @@ def train_yolov11n(data_config, model_config, epochs=50, batch_size=16, img_size
 
 if __name__ == '__main__':
     data_path = 'data.yaml'  # Đảm bảo bạn đã có tệp cấu hình dữ liệu
-    model_path = 'yolov11n.yaml'  # Đảm bảo bạn đã có tệp cấu hình mô hình YOLOv11n
+    model_path = 'yolo11.yaml'  # Đảm bảo bạn đã có tệp cấu hình mô hình YOLOv11n
     train_yolov11n(data_path, model_path, epochs=100, batch_size=16, img_size=640)
