@@ -2,14 +2,10 @@ from flask import Flask, request, jsonify
 from pathlib import Path
 from PIL import Image
 import io
-import sys
-
-# Append project directory to sys.path
-sys.path.append('D:/MLOPS_FINAL/Final_MLops')
 
 # Import các hàm xử lý từ detection
-from src.detection.yolov11n_detector import detect_with_yolov11n
-from src.detection.easyocr_detector import detect_text_with_easyocr
+from detection.yolov11n_detector import detect_with_yolov11n
+from detection.easyocr_detector import detect_text_with_easyocr
 
 app = Flask(__name__)
 
