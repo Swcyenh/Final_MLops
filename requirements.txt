@@ -1,7 +1,6 @@
 ultralytics >= 8.3.59
 easyocr >= 1.7.2
 flask >= 3.1.0
-yolo11n.pt
 opencv-python >= 4.10.0.84
 numpy >= 2.2.1
 pytest >= 8.3.4
