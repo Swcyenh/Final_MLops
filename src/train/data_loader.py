@@ -82,8 +82,8 @@ def load_data(image_dir, label_dir, test_size=0.2, batch_size=16):
 
 if __name__ == '__main__':
     # Cập nhật đường dẫn tới dataset mới
-    image_dir = 'src/train/data/images'  # Thư mục chứa ảnh
-    label_dir = 'src/train/data/labels'  # Thư mục chứa nhãn
+    image_dir = 'D:/MLOps_FINAL/Final_MLops/src/train/data/images'  # Thư mục chứa ảnh
+    label_dir = 'D:/MLOps_FINAL/Final_MLops/src/train/data/labels'  # Thư mục chứa nhãn
 
     try:
         train_loader, test_loader = load_data(image_dir, label_dir)
